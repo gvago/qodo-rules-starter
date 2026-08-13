@@ -208,7 +208,15 @@ python3 tools/sync_rule_scopes.py --rule-ids 4711,4712 \
 
 Bitbucket Data Center uses `--server https://bitbucket.example.com`, and Azure
 DevOps uses `--provider azdo --org acme`. Credentials come from the
-environment: `BB_USER` + `BB_APP_PASSWORD`, `BB_TOKEN`, or `AZDO_PAT`.
+environment: `BB_EMAIL` + `BB_API_TOKEN` for Bitbucket Cloud (app passwords
+stopped working on 28 July 2026, and API-token auth uses your Atlassian
+account email, not your Bitbucket username), `BB_TOKEN` for Data Center, or
+`AZDO_PAT` for Azure DevOps.
+
+The script refuses to send credentials over plain HTTP, to a host outside the
+expected API endpoints, or through a redirect, and exits non-zero if any rule
+fails to update so a scheduled run cannot report a broken reconcile as a
+success.
 
 The script is idempotent. A run where the repository list has not changed
 reports `all rules already match; nothing to do` and writes nothing, which is
