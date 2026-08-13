@@ -11,13 +11,71 @@ the repository root; the enforcement contract is defined here.
 
 ## The rules
 
-| ID | Rule |
-|---|---|
-| SEC-1 | Authentication and authorization: every sensitive action (PUT/POST/DELETE on loans, payments, documents, user management, admin functions) and every data access must verify identity and check server-side authorization. |
-| SEC-2 | Injection prevention: never concatenate or interpolate untrusted input into SQL, OS commands, templates, LDAP, XPath, HTML, or JavaScript. Parameterized queries and safe encoders only. |
-| SEC-3 | SSRF prevention: untrusted input must never control server-side request destinations (URL, host, IP, port). Fixed or strictly allow-listed destinations, with redirect and internal-range protections. |
-| SEC-4 | No test, debug, mock, demo, or diagnostic functionality reachable in production code paths, including debug routes, auth bypasses, and hardcoded test users. |
-| SEC-5 | No hardcoded secrets, tokens, passwords, private keys, or connection strings in source code or committed configuration. |
+The authoritative wording is `pr_compliance_checklist.yaml` at the repository
+root. The criteria below mirror it verbatim; if the two ever differ, the
+checklist wins and this file must be updated in the same change.
+
+### SEC-1: Authentication & Authorization
+
+- **Objective:** Every sensitive action and every access to data must enforce
+  authentication and server-side authorization. Sensitive actions include PUT,
+  POST and DELETE endpoints of loan management, payment and financial,
+  document management, user and access control, and critical administrative
+  functionality.
+- **Compliant:** All sensitive endpoints verify the caller's identity and
+  check server-side authorization before performing the action or returning
+  data.
+- **Violation:** A sensitive endpoint (PUT/POST/DELETE on loans, payments,
+  documents, user management, or admin functionality) performs its action or
+  returns data without authentication or without a server-side authorization
+  check.
+
+### SEC-2: Injection Prevention
+
+- **Objective:** Never concatenate untrusted input into SQL, OS commands,
+  templates, LDAP, XPath, HTML, or JavaScript. Use parameterized queries and
+  safe encoders.
+- **Compliant:** Database access uses parameterized queries / prepared
+  statements; shell commands, templates and markup are built with safe
+  encoders, never by string concatenation of untrusted input.
+- **Violation:** Untrusted input (request parameters, headers, external data)
+  is concatenated or interpolated into a SQL query, OS command, template,
+  LDAP/XPath expression, HTML or JavaScript.
+
+### SEC-3: SSRF Prevention
+
+- **Objective:** Never allow untrusted input to directly or indirectly
+  control server-side URLs, hosts, IPs, ports, or request destinations.
+  Prefer explicit allow-lists and detect bypass risks involving redirects,
+  DNS rebinding, private/internal IP ranges, localhost, and cloud metadata
+  endpoints.
+- **Compliant:** Server-side HTTP/network calls use fixed or strictly
+  allow-listed destinations; any user-influenced destination is validated
+  against an explicit allow-list with redirect and internal-range protections.
+- **Violation:** A flow from user input, external APIs, or databases reaches
+  an HTTP client or network call and controls the destination (URL, host, IP,
+  port) without strict destination validation.
+
+### SEC-4: Test Code & Debug Endpoint Exposure
+
+- **Objective:** Production code must exclude or securely disable all test,
+  debug, mock, demo, diagnostic, or development-only functionality.
+- **Compliant:** No test endpoints, debug routes, bypass mechanisms,
+  hardcoded test users or data, mock services, or hidden administrative
+  functionality reachable in production builds.
+- **Violation:** Test/debug/mock/demo code, debug routes, auth bypass
+  mechanisms, hardcoded test users, or environment checks exposing
+  non-production functionality are present and reachable in production code
+  paths.
+
+### SEC-5: Secrets & Sensitive Data Protection
+
+- **Objective:** Never hardcode secrets, tokens, passwords, private keys, or
+  connection strings in source code.
+- **Compliant:** Secrets are loaded from a secret manager or environment
+  configuration; no credential material appears in the codebase.
+- **Violation:** A secret, token, password, private key, or connection string
+  is hardcoded in source code or configuration committed to the repository.
 
 ## How to review
 
@@ -36,11 +94,14 @@ the repository root; the enforcement contract is defined here.
 ## Using this skill as a template
 
 Copy this directory to `skills/<your-skill-name>/` in your own repository and
-replace the rules table with your organization's rules. Keep the structure:
+replace the rule sections with your organization's rules. Keep the structure:
 
 - Frontmatter `description` must be a single line.
-- A rules table with stable IDs, so findings are traceable back to your
-  source document.
+- One section per rule with a stable ID, carrying the full
+  objective/compliant/violation criteria copied verbatim from your source
+  document. Do not paraphrase or condense: a shortened rule narrows what the
+  review checks. Name the source document and state that it wins on any
+  difference, as this file does above.
 - The "How to review" contract (full enumeration, coverage summary,
   false-positive gate) is what turns a rules document into a review the
   security team can trust; keep it verbatim.
