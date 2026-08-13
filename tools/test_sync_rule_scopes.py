@@ -2,7 +2,7 @@
 """Checks for sync_rule_scopes.py. Run: python3 tools/test_sync_rule_scopes.py
 
 Kept out of the script itself so no test code is reachable from the production
-entry point (SEC-4).
+entry point.
 """
 import importlib.util
 import pathlib

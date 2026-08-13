@@ -196,9 +196,10 @@ def main() -> None:
         # Fail before any write: the platform rejects an oversized list, so a
         # scheduled run would otherwise retry a known-invalid mutation forever.
         raise SystemExit(
-            f"{len(desired)} repositories exceeds the {SCOPE_LIMIT}-scope limit. "
-            f"Scope these rules to the whole organization instead, or split them "
-            f"into groups of {SCOPE_LIMIT} or fewer.")
+            f"{len(desired)} repositories exceeds the {SCOPE_LIMIT}-scope limit "
+            f"that applies to each rule individually. Scope these rules to the "
+            f"whole organization instead, or duplicate each rule so every copy "
+            f"covers at most {SCOPE_LIMIT} of the repositories.")
 
     stale = [rid for rid in rule_ids if current_scopes(rid) != desired]
     if not stale:
