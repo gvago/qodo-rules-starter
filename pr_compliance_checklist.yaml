@@ -1,0 +1,83 @@
+# Security Compliance Rules — repo-scoped enforcement for Qodo
+#
+# Placed at the repository ROOT, this file is picked up automatically by Qodo
+# on every pull request review. No central configuration and no Rules Platform
+# entry is required.
+#
+# Format reference:
+#   https://docs.qodo.ai/v1/features/custom-compliance
+#   https://docs.qodo.ai/governance/rule-enforcement/without-rule-system
+#
+# Each rule is reported on a PR as a "Rule violation" finding carrying its own
+# compliance ID, the evidence, and a link back to the rule.
+
+pr_compliances:
+  - title: "SEC-1: Authentication & Authorization"
+    compliance_label: true
+    objective: >
+      Every sensitive action and every access to data must enforce authentication and
+      server-side authorization. Sensitive actions include PUT, POST and DELETE endpoints
+      of loan management, payment and financial, document management, user and access
+      control, and critical administrative functionality.
+    success_criteria: >
+      All sensitive endpoints verify the caller's identity and check server-side
+      authorization before performing the action or returning data.
+    failure_criteria: >
+      A sensitive endpoint (PUT/POST/DELETE on loans, payments, documents, user management,
+      or admin functionality) performs its action or returns data without authentication
+      or without a server-side authorization check.
+
+  - title: "SEC-2: Injection Prevention"
+    compliance_label: true
+    objective: >
+      Never concatenate untrusted input into SQL, OS commands, templates, LDAP, XPath,
+      HTML, or JavaScript. Use parameterized queries and safe encoders.
+    success_criteria: >
+      Database access uses parameterized queries / prepared statements; shell commands,
+      templates and markup are built with safe encoders, never by string concatenation
+      of untrusted input.
+    failure_criteria: >
+      Untrusted input (request parameters, headers, external data) is concatenated or
+      interpolated into a SQL query, OS command, template, LDAP/XPath expression,
+      HTML or JavaScript.
+
+  - title: "SEC-3: SSRF Prevention"
+    compliance_label: true
+    objective: >
+      Never allow untrusted input to directly or indirectly control server-side URLs,
+      hosts, IPs, ports, or request destinations. Prefer explicit allow-lists and detect
+      bypass risks involving redirects, DNS rebinding, private/internal IP ranges,
+      localhost, and cloud metadata endpoints.
+    success_criteria: >
+      Server-side HTTP/network calls use fixed or strictly allow-listed destinations;
+      any user-influenced destination is validated against an explicit allow-list with
+      redirect and internal-range protections.
+    failure_criteria: >
+      A flow from user input, external APIs, or databases reaches an HTTP client or
+      network call and controls the destination (URL, host, IP, port) without strict
+      destination validation.
+
+  - title: "SEC-4: Test Code & Debug Endpoint Exposure"
+    compliance_label: true
+    objective: >
+      Production code must exclude or securely disable all test, debug, mock, demo,
+      diagnostic, or development-only functionality.
+    success_criteria: >
+      No test endpoints, debug routes, bypass mechanisms, hardcoded test users or data,
+      mock services, or hidden administrative functionality reachable in production builds.
+    failure_criteria: >
+      Test/debug/mock/demo code, debug routes, auth bypass mechanisms, hardcoded test
+      users, or environment checks exposing non-production functionality are present
+      and reachable in production code paths.
+
+  - title: "SEC-5: Secrets & Sensitive Data Protection"
+    compliance_label: true
+    objective: >
+      Never hardcode secrets, tokens, passwords, private keys, or connection strings
+      in source code.
+    success_criteria: >
+      Secrets are loaded from a secret manager or environment configuration; no
+      credential material appears in the codebase.
+    failure_criteria: >
+      A secret, token, password, private key, or connection string is hardcoded in
+      source code or configuration committed to the repository.
