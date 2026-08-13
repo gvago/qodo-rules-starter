@@ -50,6 +50,21 @@ Edit the YAML to change wording, add rules, or remove them. Each entry needs a
 `title`, `compliance_label: true`, and the `objective` / `success_criteria` /
 `failure_criteria` fields.
 
+### More rules to start from
+
+These five are security rules, written to be readable rather than exhaustive.
+Qodo publishes a larger library in the same file format: a global set plus 16
+per-language and per-stack sets (back-end, C++, C#, Dart, Dockerfile,
+front-end, Go, JavaScript, Kotlin, PHP, Python, Ruby, Rush, Scala, Swift,
+TypeScript):
+
+**https://github.com/qodo-ai/pr-compliance-templates**
+
+Same `pr_compliances` format, so you can lift entries straight into your own
+file, or keep the language sets separate and map each one to the repositories
+it governs. See [`docs/central-rules-repo.md`](docs/central-rules-repo.md) for
+that.
+
 ## Where the developer sees it
 
 The findings are posted on the pull request itself, so the developer who opened

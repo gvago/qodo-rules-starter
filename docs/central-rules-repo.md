@@ -56,6 +56,13 @@ Extraction is automated, so structure the file for it:
   `python/AGENTS.md`). Cleaner extraction, and much easier to re-scope each
   set to the right repositories later.
 
+Rather than writing every language set from scratch, start from Qodo's
+published library at https://github.com/qodo-ai/pr-compliance-templates: a
+global set plus 16 per-language and per-stack sets, already in the
+`pr_compliances` format and laid out as `codebase_standards/global/` and
+`codebase_standards/groups/<language>/`. Review and trim them before adopting;
+they are a starting point, not a policy.
+
 Example rule that imports well:
 
 ````markdown
