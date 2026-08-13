@@ -250,15 +250,22 @@ matters. A daily reconcile covers most organizations.
 delivery leaves a repository ungoverned silently; a nightly reconcile closes
 that gap.
 
-### Reference skill in this repository
+### Enforcing the same rules as a review skill
 
-This repository also ships `skills/security-review/SKILL.md`, a skill that
-teaches the reviewer the same five SEC rules with a full-coverage contract
-(every rule checked against every changed file, a coverage summary, and a
-false-positive gate). Qodo imports skills from `skills/<name>/SKILL.md` on
-push and scopes their extracted rules to this repository automatically. Copy
-the directory into your own repository and swap in your rules table; the file
-itself explains what to keep.
+Skills are the other supported source: Qodo imports `skills/<name>/SKILL.md`
+on push, links the extracted rules to the skill, and scopes them to that
+repository automatically.
+
+Keep rules in ONE source per repository. A rule file and a skill carrying the
+same rules are imported as two separate rule sets, so every violation is
+reported twice, and deleting one file afterwards does not remove the rules it
+already registered.
+
+A worked security-policy review skill, with the full-coverage contract (every
+rule checked against every changed file, a coverage summary, and a
+false-positive gate) lives at
+https://github.com/gvago/unofficial-qodo-review-skills under
+`skills/appsec-compliance-review/`.
 
 ### When to put the file in the target repo instead
 
