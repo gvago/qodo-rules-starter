@@ -11,7 +11,7 @@ There is no single log line that says "merged with open violations". It is a
 correlation of three records that share one `request_id`, all emitted when the
 merge webhook is processed.
 
-### Step 1 — find the merge event
+### Step 1: find the merge event
 
 ```bash
 gcloud logging read '
@@ -24,7 +24,7 @@ gcloud logging read '
 Key fields: `extra.artifact.is_merged` (`true` = merged), `extra.artifact.pr_url`,
 `extra.merge_commit_sha`, `extra.sender` (who merged), `extra.request_id`.
 
-### Step 2 — pull everything emitted for that merge
+### Step 2: pull everything emitted for that merge
 
 ```bash
 gcloud logging read '
@@ -35,10 +35,10 @@ gcloud logging read '
 
 Look for:
 
-- `"Patching N finding(s) as not_implemented on platform"` — the findings still
+- `"Patching N finding(s) as not_implemented on platform"`: the findings still
   open at merge time. `extra.artifact.finding_ids` is the list. `N > 0` means
   the PR was merged with open violations.
-- `"Parsed compliance findings to statistics"` — the per-rule breakdown in
+- `"Parsed compliance findings to statistics"`: the per-rule breakdown in
   `extra.artifacts.violated_rules` / `compliant_rules` / `custom_count`.
 
 ### One-shot filter for the Logs Explorer

@@ -1,4 +1,4 @@
-# Qodo repo-scoped security rules — starter
+# Qodo repo-scoped security rules: starter
 
 A minimal, self-contained example of enforcing an organization's security rules
 on every pull request, **without** using a central rules platform.
@@ -20,6 +20,7 @@ configure centrally, and nothing outside this repository to maintain.
 | `app/loan_service.py` | Clean baseline service (passes the rules) |
 | `app/payments.py` | **Deliberately violating** code, used to demonstrate the findings |
 | `docs/audit-log-queries.md` | How to find the enforcement events in your logs |
+| `docs/central-rules-repo.md` | Scaling up: a central rules repo, per-language rules, and repo scoping with Review Standards |
 
 ## How to use it
 

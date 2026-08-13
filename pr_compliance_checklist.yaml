@@ -1,4 +1,4 @@
-# Security Compliance Rules — repo-scoped enforcement for Qodo
+# Security Compliance Rules: repo-scoped enforcement for Qodo
 #
 # Placed at the repository ROOT, this file is picked up automatically by Qodo
 # on every pull request review. No central configuration and no Rules Platform
