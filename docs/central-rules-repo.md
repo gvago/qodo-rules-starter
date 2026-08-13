@@ -156,6 +156,100 @@ Three things to know before scripting:
 - Run any multi-rule `set-scope` with `--dry-run` first and check the
   matched count before the real call.
 
+**If `--rule-ids` is rejected**, pass the arguments as JSON instead. On some
+CLI versions the named flag fails with
+`MT-VALIDATION: argument 'rule_ids' failed schema validation (anyOf)`
+for every value, including a single id. The `--args` form works:
+
+```bash
+qodo rules set-scope --args '{"rule_ids":[4711,4712],"scopes":["/acme/orders-svc/"],"dry_run":true}' --json
+qodo rules set-scope --args '{"rule_ids":[4711,4712],"scopes":["/acme/orders-svc/"]}' --json
+```
+
+## 3a. Keeping the mapping consistent as repositories are added
+
+Everything above is a one-time mapping. A rule holds an explicit list of scope
+paths, so a repository created next month is not covered until someone widens
+the scope again.
+
+There are three ways to keep it consistent, in increasing order of effort.
+Choose the first one that fits.
+
+### Option A: scope to the organization (no automation)
+
+If the honest answer to "which repositories should this rule cover" is "all of
+them", set the scope once to `/your-org/` and there is nothing to keep in sync.
+New repositories are covered the moment they exist.
+
+```bash
+qodo rules set-scope --args '{"rule_ids":[4711,4712],"scopes":["/acme/"]}' --json
+```
+
+This is the right answer for organization-wide security and compliance rules,
+and it is the option to reach for first. Only enumerate repositories when a
+rule genuinely applies to a subset.
+
+### Option B: a scheduled reconcile (a subset of repositories)
+
+When a rule set maps to a project rather than the whole organization, run
+`tools/sync_rule_scopes.py` on a schedule. It reads the repository list from
+Bitbucket or Azure DevOps, compares it to each rule's current scopes, and calls
+`set-scope` only when they differ.
+
+```bash
+# preview
+python3 tools/sync_rule_scopes.py --rule-ids 4711,4712 \
+    --provider bitbucket --workspace acme --project PAYMENTS --dry-run
+
+# apply
+python3 tools/sync_rule_scopes.py --rule-ids 4711,4712 \
+    --provider bitbucket --workspace acme --project PAYMENTS
+```
+
+Bitbucket Data Center uses `--server https://bitbucket.example.com`, and Azure
+DevOps uses `--provider azdo --org acme`. Credentials come from the
+environment: `BB_EMAIL` + `BB_API_TOKEN` for Bitbucket Cloud (app passwords
+stopped working on 28 July 2026, and API-token auth uses your Atlassian
+account email, not your Bitbucket username), `BB_TOKEN` for Data Center, or
+`AZDO_PAT` for Azure DevOps.
+
+The script refuses to send credentials over plain HTTP, to a host outside the
+expected API endpoints, or through a redirect, and exits non-zero if any rule
+fails to update so a scheduled run cannot report a broken reconcile as a
+success.
+
+The script is idempotent. A run where the repository list has not changed
+reports `all rules already match; nothing to do` and writes nothing, which is
+what makes it safe to schedule:
+
+```
+0 6 * * *  cd /opt/qodo-rules && python3 tools/sync_rule_scopes.py \
+             --rule-ids 4711,4712 --provider bitbucket \
+             --workspace acme --project PAYMENTS >> sync.log 2>&1
+```
+
+Daily is enough for a repository list that changes weekly. Run it in CI on a
+schedule if you would rather not host a cron host.
+
+### Option C: event-driven (minutes instead of hours)
+
+If a new repository must be governed within minutes, trigger the same script
+from a repository-creation event instead of a timer:
+
+| Provider | Event |
+|---|---|
+| Bitbucket Cloud | `repo:created` (workspace-level webhook) |
+| Bitbucket Data Center | `project:modified` plus repository lifecycle events |
+| Azure DevOps | Service hook on repository created |
+
+The handler runs the same command as the cron entry. This costs you an
+endpoint to host and monitor, so it is worth it only when the delay actually
+matters. A daily reconcile covers most organizations.
+
+**Keep the timer even if you add the webhook.** A missed or failed webhook
+delivery leaves a repository ungoverned silently; a nightly reconcile closes
+that gap.
+
 ### Enforcing the same rules as a review skill
 
 Skills are the other supported source: Qodo imports `skills/<name>/SKILL.md`
@@ -199,6 +293,15 @@ that repository.
 | Per-language, many repos | Central rules repo, one file per language | Bulk re-scope to the repository list |
 | Per-repo or per-folder conventions | The target repo, at the folder it governs | Automatic from file location |
 | Hard pass/fail policy checks | `pr_compliance_checklist.yaml` in each target repo | Automatic, repo-scoped |
+
+## 5. Quick reference: keeping scope current
+
+| Situation | Approach |
+|---|---|
+| Rule applies to every repo in the org | Scope `/your-org/` once, no automation |
+| Rule applies to one project's repos | `tools/sync_rule_scopes.py` on a daily schedule |
+| A new repo must be governed within minutes | Repo-creation webhook running the same script, plus the daily timer as a backstop |
+| Rule applies to one repo or folder | Put the file there, scope is automatic |
 
 ## References
 
