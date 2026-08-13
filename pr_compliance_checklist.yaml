@@ -81,3 +81,5 @@ pr_compliances:
     failure_criteria: >
       A secret, token, password, private key, or connection string is hardcoded in
       source code or configuration committed to the repository.
+
+# Rules version: 2026-08-13.1
