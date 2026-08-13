@@ -20,7 +20,8 @@ configure centrally, and nothing outside this repository to maintain.
 | `app/loan_service.py` | Clean baseline service (passes the rules) |
 | `app/payments.py` | **Deliberately violating** code, used to demonstrate the findings |
 | `docs/audit-log-queries.md` | How to find the enforcement events in your logs |
-| `docs/central-rules-repo.md` | Scaling up: a central rules repo, per-language rules, and repo scoping with Review Standards |
+| `docs/central-rules-repo.md` | Applying one rule set across many repositories |
+| `tools/sync_rule_scopes.py` | Keeps that mapping current as repositories are added |
 
 ## How to use it
 
@@ -56,10 +57,26 @@ the PR sees the rule, why it failed, and the exact lines, before merge. The same
 findings are recorded in the platform and in the audit log, so a security team
 can review enforcement independently of the developer's own thread.
 
+## Applying the rules to more than one repository
+
+Copying the file into every repository works, and for a handful of repositories
+it is the right answer. Beyond that, keep the rules in one place and point them
+at the repositories they govern.
+
+[`docs/central-rules-repo.md`](docs/central-rules-repo.md) covers that:
+
+- a central rules repository, with one file per language or concern
+- mapping each rule set to its target repositories, in the portal or with the
+  `qodo` CLI
+- keeping the mapping current as repositories are added, with
+  [`tools/sync_rule_scopes.py`](tools/sync_rule_scopes.py) on a schedule
+- which mechanism suits which class of rule
+
 ## Audit trail
 
-Every enforcement event is logged. `docs/audit-log-queries.md` has the exact
-queries for the two questions security teams ask most:
+Every enforcement event is logged.
+[`docs/audit-log-queries.md`](docs/audit-log-queries.md) has the exact queries
+for the two questions security teams ask most:
 
 - Which pull requests were merged while rule violations were still open?
 - Who changed a rule, and when?
