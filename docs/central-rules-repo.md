@@ -108,6 +108,64 @@ Rules are enforced according to the new scope from the next review onward.
 The Rules tab shows the effective scope on every rule, so the mapping is
 auditable at a glance.
 
+### Mapping scopes with the qodo CLI
+
+Everything the portal does above can be scripted with the `qodo` CLI
+(install: `curl -fsSL https://get.qodo.ai/install.sh | sh`, then
+`qodo login`). This is the right tool when the mapping is a matrix you want
+in version control, for example "the Java set applies to these 14 repos".
+
+Scope paths are hierarchical: `/` is everything, `/acme/` is a Git
+organization, `/acme/orders-svc/` is a repository, and
+`/acme/orders-svc/src/payments/` is a folder. A rule matches a change when
+any of its scopes is an ancestor of the changed file's path. Each rule holds
+up to 25 scope paths.
+
+```bash
+# Find the imported rules and their ids (filter by name or current scope)
+qodo rules list --name-contains "SQL" --json
+qodo rules list --scopes "/acme/engineering-rules/" --json
+
+# Inspect one rule before changing it
+qodo rules get --rule-id 4711 --json
+
+# Global security set: scope to everything (empty list = universal scope /)
+qodo rules set-scope --rule-ids 4711,4712,4713 --scopes "" --dry-run
+qodo rules set-scope --rule-ids 4711,4712,4713 --scopes ""
+
+# Java set: scope to the Java repositories
+qodo rules set-scope --rule-ids 4720,4721 \
+  --scopes "/acme/orders-svc/","/acme/billing-svc/","/acme/gateway/"
+
+# Create a rule directly with the mapping baked in (skips file import)
+qodo rules create \
+  --name "No raw SQL string concatenation" \
+  --category Security --severity error \
+  --content "Never build SQL with string concatenation or interpolation. Always use parameterized queries." \
+  --good-examples 'ps = conn.prepareStatement("SELECT * FROM users WHERE id = ?")' \
+  --bad-examples 'stmt.execute("SELECT * FROM users WHERE id = " + userId)' \
+  --scopes "/acme/orders-svc/","/acme/billing-svc/"
+```
+
+Three things to know before scripting:
+
+- `set-scope` REPLACES the rule's full scope list, it does not merge. To add
+  a repository, pass the union of the current scopes and the new one.
+- Scope changes and rule creation require workspace admin permission. A
+  non-admin `create` lands as a pending suggestion an admin must approve.
+- Run any multi-rule `set-scope` with `--dry-run` first and check the
+  matched count before the real call.
+
+### Reference skill in this repository
+
+This repository also ships `skills/security-review/SKILL.md`, a skill that
+teaches the reviewer the same five SEC rules with a full-coverage contract
+(every rule checked against every changed file, a coverage summary, and a
+false-positive gate). Qodo imports skills from `skills/<name>/SKILL.md` on
+push and scopes their extracted rules to this repository automatically. Copy
+the directory into your own repository and swap in your rules table; the file
+itself explains what to keep.
+
 ### When to put the file in the target repo instead
 
 If a rule set genuinely belongs to one repository or one folder (a service's

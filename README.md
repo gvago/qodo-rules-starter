@@ -21,6 +21,7 @@ configure centrally, and nothing outside this repository to maintain.
 | `app/payments.py` | **Deliberately violating** code, used to demonstrate the findings |
 | `docs/audit-log-queries.md` | How to find the enforcement events in your logs |
 | `docs/central-rules-repo.md` | Scaling up: a central rules repo, per-language rules, and repo scoping with Review Standards |
+| `skills/security-review/SKILL.md` | Reference skill: the same five rules as a full-coverage review contract, reusable as a template |
 
 ## How to use it
 
