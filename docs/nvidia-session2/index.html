@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NVIDIA Skills Workshop · Session 2</title>
+<style>
+:root{--bg:#0d0e10;--card:#17191d;--fg:#f7f7f8;--muted:#a9adb7;--accent:#9b8cff;--line:#30333a;--ok:#66d18f}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:760px;margin:auto;padding:20px 16px 72px}header{padding:20px 0 10px}.eyebrow{color:var(--accent);font-size:13px;font-weight:750;letter-spacing:.11em;text-transform:uppercase}h1{font-size:36px;line-height:1.05;margin:10px 0 14px}h2{font-size:25px;margin:0 0 12px}p{margin:8px 0 14px}.lead{color:var(--muted);font-size:19px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:16px 0}.mode{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start}.n{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#29243f;color:#c8beff;font-weight:800}.mode strong{display:block}.mode span{color:var(--muted)}nav{display:grid;gap:9px;margin:22px 0}.jump{display:block;padding:14px 16px;border-radius:13px;background:#24272d;color:var(--fg);text-decoration:none;border:1px solid var(--line);font-weight:700}section{scroll-margin-top:14px;margin-top:34px}pre{margin:14px 0;white-space:pre-wrap;overflow-wrap:anywhere;background:#0a0b0d;border:1px solid var(--line);border-radius:14px;padding:15px;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#e5e5e8}.context{color:#c6cad2;font-size:15px}.field{display:block;margin:12px 0 5px;font-weight:750}textarea,input{width:100%;font:16px/1.4 system-ui;padding:12px;border-radius:11px;border:1px solid #464b55;background:#101216;color:var(--fg)}textarea{min-height:92px;resize:vertical}.formula{padding:16px;border-left:4px solid var(--accent);background:#171426;border-radius:0 12px 12px 0}.check label{display:block;padding:9px 0;border-bottom:1px solid #282b31}.check input{width:auto;margin-right:10px}.hidden{display:none}.answer{border-color:#3f6c51}.answer h2{color:var(--ok)}button{border:0;border-radius:12px;padding:13px 16px;background:var(--accent);color:#0d0e10;font-weight:850;font-size:16px;cursor:pointer}.small{font-size:14px;color:var(--muted)}footer{margin-top:42px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">NVIDIA + Qodo · Session 2</div><h1>Your code. Your findings. Your skill.</h1><p class="lead">Everything needed for the hands-on exercise, on one phone-friendly page. No login, repository, or laptop required.</p></header>
+<div class="card"><h2>Choose your mode</h2>
+<div class="mode"><b class="n">A</b><div><strong>Your repository</strong><span>Use a recent change and its Qodo findings.</span></div></div>
+<div class="mode"><b class="n">B</b><div><strong>Mini-group</strong><span>Use the shared sensor-ingest change below. One phone per group is enough.</span></div></div>
+<div class="mode"><b class="n">C</b><div><strong>Stage mode</strong><span>Follow Guy's projected code and vote as a room. One volunteer uses Guy's laptop.</span></div></div>
+</div>
+<nav><a class="jump" href="#code">1 · Inspect the shared change</a><a class="jump" href="#judge">2 · Make a verdict</a><a class="jump" href="#skill">3 · Draft a skill</a><a class="jump" href="#gate">4 · Test the draft</a></nav>
+<section id="code"><div class="eyebrow">Exercise 1 · Evidence</div><h2>Find one to three real findings</h2><p>The compiler accepts this code and the happy-path run prints success. What should review still catch?</p>
+<pre>#include "sensor_buffer.h"
+#include &lt;stdlib.h&gt;
+
+/* Ingest a burst of raw readings coming off the CAN receive path. */
+int sensor_ingest(sensor_buffer_t *buf, const uint16_t *raw, size_t n) {
+    uint16_t *scaled = malloc(n * sizeof(uint16_t));
+
+    for (size_t i = 0; i &lt; n; i++) {
+        scaled[i] = (uint16_t)(raw[i] * 4u);
+        sensor_buffer_push(buf, scaled[i]);
+    }
+
+    free(scaled);
+    return SENSOR_OK;
+}</pre>
+<div class="card context"><strong>Context</strong><pre>#define SENSOR_OK         0
+#define SENSOR_ERR_RANGE (-1)
+#define SENSOR_ERR_NULL  (-2)
+
+int sensor_buffer_push(sensor_buffer_t *buf, uint16_t sample);</pre><p>Assume <code>sensor_buffer_push</code> can return <code>SENSOR_ERR_NULL</code> or <code>SENSOR_ERR_RANGE</code>.</p></div>
+<label class="field" for="evidence">Exact operation, failure, and evidence</label><textarea id="evidence" placeholder="Example format: operation → what can fail → why it matters"></textarea></section>
+<section id="judge"><div class="eyebrow">Exercise 2 · Judgment</div><h2>Keep, reject, or rewrite</h2><div class="card"><p><strong>Keep</strong>: true, important, specific, and reusable.</p><p><strong>Reject</strong>: wrong or irrelevant.</p><p><strong>Rewrite</strong>: valid concern, but the rule needs a missing condition.</p></div><p class="formula">When <strong>X</strong> happens, check <strong>Y</strong>, and report <strong>Z</strong>.</p><label class="field" for="rule">Your reusable sentence</label><textarea id="rule"></textarea></section>
+<section id="skill"><div class="eyebrow">Exercise 3 · Skill</div><h2>Write four lines</h2><label class="field" for="trigger">Trigger: when should this activate?</label><input id="trigger"><label class="field" for="loadrule">Rule: what must the reviewer check?</label><textarea id="loadrule"></textarea><label class="field" for="finding">Finding eval: what code must trigger?</label><textarea id="finding"></textarea><label class="field" for="clean">Clean eval: what corrected code must stay quiet?</label><textarea id="clean"></textarea>
+<div class="card"><strong>Prompt for the volunteer on Guy's laptop</strong><pre>Using this group's validated finding, verdict, reason, and rewritten rule, draft a starter review skill for safety-critical embedded C. Keep SKILL.md lean, put detail and examples in references, and include one finding eval and one clean eval. Do not post or commit anything.</pre></div></section>
+<section id="gate"><div class="eyebrow">Quality gate</div><h2>Before the skill survives</h2><div class="card check"><label><input type="checkbox">Description fires without naming the skill</label><label><input type="checkbox">Load-bearing conditions stay in SKILL.md</label><label><input type="checkbox">Examples come from evidence</label><label><input type="checkbox">Finding eval catches the issue</label><label><input type="checkbox">Clean eval stays quiet</label><label><input type="checkbox">Permanent updates require human approval</label></div><button id="reveal">Reveal facilitator findings</button><div id="answers" class="card answer hidden"><h2>Expected floor</h2><ol><li>Dynamic allocation on the real-time ingest path.</li><li>Unchecked allocation and ignored <code>sensor_buffer_push</code> return.</li><li>Unconditional <code>SENSOR_OK</code> despite possible failures.</li></ol><p class="small">Bonus valid findings are welcome. The skill sets the floor; the reviewer still thinks.</p></div></section>
+<footer>Qodo · NVIDIA Developer Day · Shared exercise contains no proprietary code.</footer>
+<script>
+const ids=['evidence','rule','trigger','loadrule','finding','clean'];
+for(const id of ids){const el=document.getElementById(id);el.value=localStorage.getItem('nvidia-s2-'+id)||'';el.addEventListener('input',()=>localStorage.setItem('nvidia-s2-'+id,el.value));}
+document.getElementById('reveal').addEventListener('click',()=>document.getElementById('answers').classList.toggle('hidden'));
+</script></main></body></html>
