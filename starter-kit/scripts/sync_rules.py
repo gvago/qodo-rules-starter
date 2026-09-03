@@ -16,9 +16,15 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 RULES_DIR = ROOT / "rules"
+SCOPES_FILE = ROOT / "rule-scopes.txt"
 PLACEHOLDER = re.compile(r"\{\{[^}]+\}\}")
 REQUIRED = ("name", "category", "severity", "content", "good_examples", "bad_examples")
 SEVERITIES = {"error", "warning", "recommendation"}
+
+
+def require_cli_value(value: str, field: str) -> None:
+    if value.startswith("-"):
+        raise ValueError(f"{field} must not start with '-'")
 
 
 def load_rule(path: Path) -> dict[str, str]:
@@ -32,6 +38,8 @@ def load_rule(path: Path) -> dict[str, str]:
     if missing:
         raise ValueError(f"{path}: missing fields: {missing}")
     rule = {field: str(doc[field]).strip() for field in REQUIRED}
+    for field, value in rule.items():
+        require_cli_value(value, field)
     if any(PLACEHOLDER.search(value) for value in rule.values()):
         raise ValueError(f"{path}: replace every template placeholder")
     if rule["severity"] not in SEVERITIES:
@@ -40,6 +48,9 @@ def load_rule(path: Path) -> dict[str, str]:
 
 
 def load_rules() -> list[dict[str, str]]:
+    unsupported = sorted(RULES_DIR.glob("*.yml"))
+    if unsupported:
+        raise ValueError(f"use the .yaml extension: {unsupported}")
     rules = [
         load_rule(path)
         for path in sorted(RULES_DIR.glob("*.yaml"))
@@ -60,9 +71,17 @@ def parse_scopes(raw: str) -> list[str]:
     if len(scopes) > 25:
         raise ValueError("Qodo accepts at most 25 scopes per rule")
     for scope in scopes:
+        require_cli_value(scope, "scope")
         if not (scope.startswith("/") and scope.endswith("/")):
             raise ValueError(f"invalid scope {scope!r}; scope paths start and end with /")
     return scopes
+
+
+def load_scopes() -> list[str]:
+    raw = SCOPES_FILE.read_text()
+    if PLACEHOLDER.search(raw):
+        raise ValueError(f"{SCOPES_FILE}: replace the scope placeholder")
+    return parse_scopes(raw)
 
 
 def qodo_bin() -> str:
@@ -113,8 +132,14 @@ def find_existing(name: str) -> dict | None:
             "--page-size",
             "100",
         )
-        matches.extend(rule for rule in page.get("rules", []) if rule.get("name") == name)
-        if page_number * 100 >= int(page.get("totalCount", 0)):
+        page_rules = page.get("rules") or []
+        if not isinstance(page_rules, list):
+            raise RuntimeError("qodo rules list returned invalid rules")
+        matches.extend(rule for rule in page_rules if rule.get("name") == name)
+        total_count = page.get("totalCount")
+        if not isinstance(total_count, int):
+            raise RuntimeError("qodo rules list returned invalid totalCount")
+        if page_number * 100 >= total_count:
             break
         page_number += 1
     if len(matches) > 1:
@@ -137,9 +162,9 @@ def is_unchanged(rule: dict[str, str], existing: dict, scopes: list[str]) -> boo
     return (
         existing.get("category") == rule["category"]
         and existing.get("severity") == rule["severity"]
-        and existing.get("content", "").strip() == rule["content"]
-        and existing.get("goodExamples", "").strip() == rule["good_examples"]
-        and existing.get("badExamples", "").strip() == rule["bad_examples"]
+        and (existing.get("content") or "").strip() == rule["content"]
+        and (existing.get("goodExamples") or "").strip() == rule["good_examples"]
+        and (existing.get("badExamples") or "").strip() == rule["bad_examples"]
         and sorted(existing.get("scopes") or []) == scopes
         and existing.get("state") == "active"
     )
@@ -153,13 +178,16 @@ def require_active(response: dict, name: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scopes", default=os.environ.get("RULE_SCOPES", ""))
     parser.add_argument("--apply", action="store_true", help="write the displayed plan to Qodo")
+    parser.add_argument("--validate", action="store_true", help="validate local rules and scope only")
     args = parser.parse_args()
 
     try:
         rules = load_rules()
-        scopes = parse_scopes(args.scopes)
+        scopes = load_scopes()
+        if args.validate:
+            print(f"validated {len(rules)} rule(s) for {len(scopes)} scope(s)")
+            return 0
         changes: list[tuple[str, dict[str, str], dict | None]] = []
         print(f"target scopes: {', '.join(scopes)}")
         for rule in rules:
@@ -170,15 +198,14 @@ def main() -> int:
                 else "CREATE"
             )
             changes.append((action, rule, existing))
+            if existing and not isinstance(existing.get("ruleId"), int):
+                raise RuntimeError(f"Qodo rule {rule['name']!r} has no numeric ruleId")
             suffix = f" (rule {existing['ruleId']})" if existing else ""
             print(f"{action:6} {rule['name']}{suffix}")
 
         if not args.apply:
             print("preview only; pass --apply in approved publication automation")
             return 0
-
-        if os.environ.get("CI") != "true":
-            raise ValueError("--apply is restricted to approved CI automation")
 
         completed = []
         for action, rule, existing in changes:

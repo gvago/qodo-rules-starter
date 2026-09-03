@@ -33,6 +33,7 @@ Copy the contents of `starter-kit/` into the root of a new standards repository:
 .github/workflows/review-standards.yml
 .gitignore
 requirements.txt
+rule-scopes.txt
 rules/_template.yaml
 rules/demo-shell-command-safety.yaml
 scripts/sync_rules.py
@@ -60,15 +61,13 @@ Use your organization's approved installer and login endpoint when it provides o
 
 Create these GitHub settings:
 
-| Name | Kind | Value |
-|---|---|---|
-| `QODO_API_KEY` | Environment secret in `qodo-sync` | Qodo workspace admin API key |
-| `QODO_SDK_BASE_URL` | Environment secret in `qodo-sync` | Qodo SDK URL, if your installation requires one |
-| `QODO_RULE_SCOPES` | Repository variable | Initial repository scope, such as `/acme/security-rules-test/` |
+This starter's publication workflow targets Qodo Cloud. For single-tenant or on-premises deployments, use the installer and login command supplied by your Qodo administrator instead of adding a configurable endpoint to the workflow.
 
-Protect the `qodo-sync` environment so only the default branch can access it. Never commit credentials.
+Protect the `qodo-sync` environment so only the default branch can access it. Store `QODO_API_KEY` there as the Qodo workspace admin API key. Never commit credentials.
 
-The workflow template publishes after a pull request merges into `main`; during guided setup, the skill replaces that branch with the standards repository's actual default branch when needed. Scope-only changes can be reconciled with the workflow's manual **Run workflow** action.
+Set the initial scope in `rule-scopes.txt`, such as `/acme/security-rules-test/`. Scope changes use the same reviewed pull-request path as rule changes.
+
+The workflow publishes only after a pull request merges into the repository's live default branch. Keep branch protection enabled so publication always follows a reviewed pull request.
 
 The workflow uses a version-pinned Qodo CLI artifact and verifies the SHA-256 checksum currently published by Qodo before login. Its Python dependency is also version-and-hash pinned. Update the Qodo version and checksum together from Qodo's `version.json` when upgrading the starter.
 
@@ -81,7 +80,7 @@ The standard path is Git-first:
 3. Qodo reviews the rule and sync code in Git.
 4. Invoke the installed Qodo Review Resolver skill to handle the findings.
 5. Merge after the review and human approval are ready.
-6. The workflow publishes the rule with `QODO_RULE_SCOPES`.
+6. The workflow publishes the rule with the reviewed `rule-scopes.txt` value.
 
 You can optionally run a local review before pushing:
 

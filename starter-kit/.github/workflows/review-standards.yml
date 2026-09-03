@@ -1,16 +1,15 @@
 name: Review Standards
 
 on:
-  workflow_dispatch:
   pull_request:
     paths:
       - "rules/**"
+      - "rule-scopes.txt"
       - "scripts/**"
       - "requirements.txt"
       - ".github/workflows/review-standards.yml"
   pull_request_target:
     types: [closed]
-    branches: [main]
 
 permissions:
   contents: read
@@ -36,12 +35,10 @@ jobs:
         run: |
           python3 -m pip install --quiet --require-hashes -r requirements.txt
           python3 scripts/test_sync_rules.py
-          python3 -c 'import scripts.sync_rules as s; s.load_rules()'
+          python3 scripts/sync_rules.py --validate
 
   sync:
-    if: >-
-      (github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
-      (github.event.pull_request.merged == true && github.event.pull_request.base.ref == github.event.repository.default_branch)
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == github.event.repository.default_branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: qodo-sync
@@ -72,26 +69,12 @@ jobs:
       - name: Log in to Qodo
         env:
           QODO_API_KEY: ${{ secrets.QODO_API_KEY }}
-          QODO_SDK_BASE_URL: ${{ secrets.QODO_SDK_BASE_URL }}
         run: |
           test -n "$QODO_API_KEY" || { echo "QODO_API_KEY is missing" >&2; exit 1; }
-          if [ -n "$QODO_SDK_BASE_URL" ]; then
-            node -e '
-              const u = new URL(process.argv[1]);
-              if (u.protocol !== "https:" || u.username || u.password || u.pathname !== "/" || u.search || u.hash) process.exit(1);
-            ' "$QODO_SDK_BASE_URL" || { echo "QODO_SDK_BASE_URL must be an HTTPS origin" >&2; exit 1; }
-          fi
           args=(--api-key "$QODO_API_KEY" --insecure-storage)
-          if [ -n "$QODO_SDK_BASE_URL" ]; then
-            args+=(--base-url "$QODO_SDK_BASE_URL")
-          fi
           "$QODO_BIN" login "${args[@]}"
           "$QODO_BIN" whoami --json
       - name: Preview sync
-        env:
-          RULE_SCOPES: ${{ vars.QODO_RULE_SCOPES }}
         run: python3 scripts/sync_rules.py
       - name: Publish standards
-        env:
-          RULE_SCOPES: ${{ vars.QODO_RULE_SCOPES }}
         run: python3 scripts/sync_rules.py --apply

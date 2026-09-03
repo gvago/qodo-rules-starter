@@ -71,14 +71,14 @@ Get the starter source from the same public repository or package that supplied 
 
 Before copying, require a clean standards-repository working tree and produce a source-to-destination collision manifest. Copy only paths that do not exist. Show every collision and ask what to preserve or replace; never overwrite silently. Exclude `skills/` when the skill is installed separately.
 
-Discover the repository's default branch. If it is not `main`, replace `branches: [main]` in `.github/workflows/review-standards.yml` with the exact default branch before showing the diff.
+Discover and protect the repository's default branch. The publication job selects it from the GitHub event, so no branch name needs to be hardcoded in the copied workflow.
 
 Inspect the copied README, workflow, rule template, demo rule, and sync helper. Ask for:
 
-1. The Qodo deployment URL, or confirmation that Qodo Cloud is correct.
+1. Confirmation that Qodo Cloud is correct. For single-tenant or on-premises deployments, stop and use the administrator-supplied publication login command rather than modifying the workflow ad hoc.
 2. The initial scope in `/owner/repository/` form, using the walkthrough repository.
 
-Configure `QODO_RULE_SCOPES` as a repository variable. Create the protected `qodo-sync` environment and restrict it to the default branch. Store `QODO_SDK_BASE_URL` in that environment when the deployment requires one. Ask which workspace admin will own publication; have that admin store the workspace admin key as `QODO_API_KEY` in the protected environment through the Git provider UI or approved secret manager, then confirm completion. If no admin key is available, stop before publication and report that exact dependency.
+Replace the placeholder in `rule-scopes.txt` with the initial scope. Create the protected `qodo-sync` environment and restrict it to the default branch. Require pull requests and the helper check on that branch so publication always follows reviewed content. Ask which workspace admin will own publication; have that admin store the workspace admin key as `QODO_API_KEY` in the protected environment through the Git provider UI or approved secret manager, then confirm completion. If no admin key is available, stop before publication and report that exact dependency.
 
 Run the helper check and sync preview. Optionally run local Qodo review. Show the diff and preview before asking approval for Git writes.
 

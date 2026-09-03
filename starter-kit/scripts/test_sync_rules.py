@@ -25,7 +25,14 @@ with tempfile.TemporaryDirectory() as tmp:
     path = pathlib.Path(tmp) / "parameterized-queries.yaml"
     path.write_text(VALID)
     rule = sync_rules.load_rule(path)
-    assert rule["name"] == "Require parameterized queries"
+    assert rule == {
+        "name": "Require parameterized queries",
+        "category": "Security",
+        "severity": "error",
+        "content": "Use parameterized queries when untrusted input reaches a database query.",
+        "good_examples": "cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))",
+        "bad_examples": "cursor.execute(f'SELECT * FROM users WHERE id = {user_id}')",
+    }
 
     path.write_text(VALID.replace("Require parameterized queries", "{{RULE_NAME}}"))
     try:
@@ -42,6 +49,14 @@ with tempfile.TemporaryDirectory() as tmp:
         assert "must be strings" in str(exc)
     else:
         raise AssertionError("non-string rule fields must be rejected")
+
+    path.write_text(VALID.replace("Require parameterized queries", "-unsafe-name"))
+    try:
+        sync_rules.load_rule(path)
+    except ValueError as exc:
+        assert "must not start" in str(exc)
+    else:
+        raise AssertionError("CLI-like rule values must be rejected")
 
 assert sync_rules.parse_scopes("/acme/security-test/") == [
     "/acme/security-test/"
@@ -92,6 +107,9 @@ remote_with_null_scopes = {**remote, "scopes": None}
 assert not sync_rules.is_unchanged(
     local, remote_with_null_scopes, ["/acme/security-test/"]
 )
+assert not sync_rules.is_unchanged(
+    local, {**remote, "content": None}, ["/acme/security-test/"]
+)
 
 pages = [
     {"page": 1, "totalCount": 101, "rules": []},
@@ -107,5 +125,18 @@ except RuntimeError as exc:
     assert "expected 'active'" in str(exc)
 else:
     raise AssertionError("non-active writes must fail publication")
+
+with tempfile.TemporaryDirectory() as tmp:
+    with mock.patch.object(sync_rules, "SCOPES_FILE", pathlib.Path(tmp) / "scopes.txt"):
+        sync_rules.SCOPES_FILE.write_text("/acme/security-test/\n")
+        assert sync_rules.load_scopes() == ["/acme/security-test/"]
+
+        sync_rules.SCOPES_FILE.write_text("{{QODO_RULE_SCOPE}}\n")
+        try:
+            sync_rules.load_scopes()
+        except ValueError as exc:
+            assert "placeholder" in str(exc)
+        else:
+            raise AssertionError("scope placeholders must be rejected")
 
 print("all checks passed")
