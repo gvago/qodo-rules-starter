@@ -1,0 +1,17 @@
+name: "Do not build shell commands from untrusted input"
+category: Security
+severity: warning
+content: >-
+  When request or external input influences an operating-system operation, do
+  not interpolate it into a shell command or invoke a shell interpreter. Use a
+  non-shell API or a fixed argument vector with validated values.
+good_examples: |
+  import socket
+
+  def resolve_host(hostname: str) -> None:
+      socket.getaddrinfo(hostname, None)
+bad_examples: |
+  import subprocess
+
+  def resolve_host(hostname: str) -> None:
+      subprocess.run(f"nslookup {hostname}", shell=True, check=True)

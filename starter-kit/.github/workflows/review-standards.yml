@@ -1,0 +1,97 @@
+name: Review Standards
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "rules/**"
+      - "scripts/**"
+      - "requirements.txt"
+      - ".github/workflows/review-standards.yml"
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-standards-publish-${{ github.repository }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  helper-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check sync helper
+        run: |
+          python3 -m pip install --quiet --require-hashes -r requirements.txt
+          python3 scripts/test_sync_rules.py
+          python3 -c 'import scripts.sync_rules as s; s.load_rules()'
+
+  sync:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
+      (github.event.pull_request.merged == true && github.event.pull_request.base.ref == github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: qodo-sync
+    steps:
+      - name: Require default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          REVIEWED_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+        run: |
+          test -n "$DEFAULT_BRANCH"
+          echo "REVIEWED_SHA=$REVIEWED_SHA" >> "$GITHUB_ENV"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          ref: ${{ env.REVIEWED_SHA }}
+      - name: Install dependencies
+        run: python3 -m pip install --quiet --require-hashes -r requirements.txt
+      - name: Install pinned Qodo CLI
+        env:
+          QODO_CLI_VERSION: 0.1.0-next.40
+          QODO_CLI_SHA256: ae9b558fd0cf1bea6300a254bba124311c988216322b7a5ef1698c7e360ed958
+        run: |
+          url="https://get.qodo.ai/releases/$QODO_CLI_VERSION/qodo.mjs"
+          curl -fsSL "$url" -o /tmp/qodo.mjs
+          echo "$QODO_CLI_SHA256  /tmp/qodo.mjs" | sha256sum --check --strict
+          install -m 0755 /tmp/qodo.mjs /tmp/qodo
+          echo "QODO_BIN=/tmp/qodo" >> "$GITHUB_ENV"
+      - name: Log in to Qodo
+        env:
+          QODO_API_KEY: ${{ secrets.QODO_API_KEY }}
+          QODO_SDK_BASE_URL: ${{ secrets.QODO_SDK_BASE_URL }}
+        run: |
+          test -n "$QODO_API_KEY" || { echo "QODO_API_KEY is missing" >&2; exit 1; }
+          if [ -n "$QODO_SDK_BASE_URL" ]; then
+            node -e '
+              const u = new URL(process.argv[1]);
+              if (u.protocol !== "https:" || u.username || u.password || u.pathname !== "/" || u.search || u.hash) process.exit(1);
+            ' "$QODO_SDK_BASE_URL" || { echo "QODO_SDK_BASE_URL must be an HTTPS origin" >&2; exit 1; }
+          fi
+          args=(--api-key "$QODO_API_KEY" --insecure-storage)
+          if [ -n "$QODO_SDK_BASE_URL" ]; then
+            args+=(--base-url "$QODO_SDK_BASE_URL")
+          fi
+          "$QODO_BIN" login "${args[@]}"
+          "$QODO_BIN" whoami --json
+      - name: Preview sync
+        env:
+          RULE_SCOPES: ${{ vars.QODO_RULE_SCOPES }}
+        run: python3 scripts/sync_rules.py
+      - name: Publish standards
+        env:
+          RULE_SCOPES: ${{ vars.QODO_RULE_SCOPES }}
+        run: python3 scripts/sync_rules.py --apply
