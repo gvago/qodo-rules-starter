@@ -21,9 +21,39 @@ configure centrally, and nothing outside this repository to maintain.
 | `app/payments.py` | **Deliberately violating** code, used to demonstrate the findings |
 | `docs/audit-log-queries.md` | How to find the enforcement events in your logs |
 | `docs/central-rules-repo.md` | Applying one rule set across many repositories |
+| `docs/security-review-standards-as-code.md` | Guided workflow for managing Review Standards in Git |
 | `tools/sync_rule_scopes.py` | Keeps that mapping current as repositories are added |
+| `starter-kit/` | Copyable YAML, CI, Qodo CLI sync, checks, and guided setup skill |
 
-## How to use it
+## Guided setup: start here
+
+Do not work through the sections below by hand unless you want to. Use the
+included skill for the easy path.
+
+1. Clone this repository and open it in Codex, Claude Code, Cursor, or another
+   skill-compatible coding agent.
+2. Install or copy
+   [`starter-kit/skills/qodo-security-standards-setup/`](starter-kit/skills/qodo-security-standards-setup/)
+   into that agent's project skill directory. For example, with Claude Code:
+
+   ```bash
+   mkdir -p .claude/skills
+   cp -R starter-kit/skills/qodo-security-standards-setup .claude/skills/
+   ```
+
+3. Start a fresh agent session, then say:
+
+   > Set up Qodo Security Review Standards for my repositories.
+
+The agent asks for an existing standards repository or offers to create one,
+then guides Qodo setup, repository-specific Security Agent activation, starter
+installation, the Qodo-reviewed pull request, publication, walkthrough, and
+first real rule.
+
+If your agent does not discover it automatically, explicitly ask it to run
+`qodo-security-standards-setup`.
+
+## Manual reference
 
 1. Clone this repository into your environment.
 2. Copy `pr_compliance_checklist.yaml` to the root of any repository you want
@@ -71,6 +101,19 @@ at the repositories they govern.
 - keeping the mapping current as repositories are added, with
   [`tools/sync_rule_scopes.py`](tools/sync_rule_scopes.py) on a schedule
 - which mechanism suits which class of rule
+
+## Standards-as-code workflow
+
+[`docs/security-review-standards-as-code.md`](docs/security-review-standards-as-code.md)
+shows the normal Git-first flow: write a standard, let Qodo review it in the
+pull request, resolve useful findings with the Qodo resolver skill, merge, and
+publish it with the intended scope.
+
+Use the guided setup skill above to walk through the setup end to end. The
+starter also includes placeholder YAML, a reviewed-branch Qodo CLI sync, and an
+optional local helper check. Begin with one non-production repository so the
+team can see the workflow, then move directly to normal repository or
+Git-organization scope.
 
 ## Audit trail
 

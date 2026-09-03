@@ -1,0 +1,34 @@
+{
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Help me set up Qodo security standards. The walkthrough target is https://github.com/acme/payments. I do not have a standards repository yet. Walk me through it and start with the next thing you need from me.",
+      "expected_output": "The response asks whether to create a standards repository and requests only the missing owner/name/visibility or a full existing URL. It preserves the supplied target and does not substitute unrelated local accounts, repositories, deployment endpoints, or credentials. It does not install, create, clone, commit, push, open a PR, or request a token.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "The repositories are https://github.com/acme/security-standards and https://github.com/acme/payments. Assume read-only checks show Qodo is not installed. This is Qodo Cloud. Continue, but do not install yet.",
+      "expected_output": "The response asks approval before installation and uses https://get.qodo.ai/version.json to resolve a versioned artifact and SHA-256 digest before downloading and verifying the exact CLI artifact. It fails closed on mismatch, distinguishes core skills from the optional Qodo Standards skills, and performs no install or remote mutation.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "The CLI and all five Qodo skills are ready. The standards repo is https://github.com/acme/security-standards and the walkthrough repo is https://github.com/acme/payments. What is the next step?",
+      "expected_output": "The response directs the user to select acme/payments in Qodo portal Configurations > Context, enable and save Security Agent, and confirm the repository appears under Repositories with Healthy connection and Code review enabled. It also requires code review on the standards repository before its PR stage. It does not claim readiness until the named repositories are confirmed.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Portal readiness is confirmed for both repositories. Continue setting up https://github.com/acme/security-standards, but stop before any Git write or live Qodo rule change.",
+      "expected_output": "The response gets starter-kit from https://github.com/gvago/qodo-rules-starter at a recorded commit, preserves existing files, sets the initial scope in rule-scopes.txt, creates or proposes the protected qodo-sync environment, and has an admin store QODO_API_KEY without exposing it. It runs or proposes the helper check and sync preview, may offer optional local Qodo review, shows the diff, and stops before branch, commit, push, PR, merge, or live rule mutation.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "The starter PR is open and Qodo finished reviewing the current head. What happens from here?",
+      "expected_output": "The response uses the installed Review Resolver for the completed current-head Git review, applies only sound findings, reruns checks and review, asks before merge, verifies publication and exact active repository scope after merge, then guides a safe non-production target-repository walkthrough and the first real rule. It keeps local review optional and does not merge the planted issue.",
+      "files": []
+    }
+  ]
+}

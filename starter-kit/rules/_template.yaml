@@ -1,0 +1,12 @@
+# Copy this file to rules/<kebab-case-name>.yaml.
+# Replace every {{PLACEHOLDER}} before validation.
+
+name: "{{RULE_NAME}}"
+category: Security
+severity: warning
+content: >-
+  {{RULE_CONTENT_1_TO_3_IMPERATIVE_SENTENCES}}
+good_examples: |
+  {{MINIMAL_SYNTACTICALLY_VALID_COMPLIANT_EXAMPLE}}
+bad_examples: |
+  {{MINIMAL_SYNTACTICALLY_VALID_NONCOMPLIANT_EXAMPLE}}
