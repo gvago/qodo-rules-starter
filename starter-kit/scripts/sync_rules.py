@@ -64,6 +64,13 @@ def load_rules() -> list[dict[str, str]]:
     return rules
 
 
+EXAMPLE_SCOPES = {
+    "/your-org/backend/",
+    "/your-org/frontend/",
+    "/your-org/mobile/",
+}
+
+
 def parse_scopes(raw: str) -> list[str]:
     scopes = sorted({scope.strip() for scope in raw.split(",") if scope.strip()})
     if not scopes:
@@ -81,7 +88,10 @@ def load_scopes() -> list[str]:
     raw = SCOPES_FILE.read_text()
     if PLACEHOLDER.search(raw):
         raise ValueError(f"{SCOPES_FILE}: replace the scope placeholder")
-    return parse_scopes(raw)
+    scopes = parse_scopes(raw)
+    if set(scopes) == EXAMPLE_SCOPES:
+        raise ValueError(f"{SCOPES_FILE}: replace the example scopes with your repositories")
+    return scopes
 
 
 def qodo_bin() -> str:

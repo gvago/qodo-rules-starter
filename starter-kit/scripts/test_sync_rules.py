@@ -128,8 +128,18 @@ else:
 
 with tempfile.TemporaryDirectory() as tmp:
     with mock.patch.object(sync_rules, "SCOPES_FILE", pathlib.Path(tmp) / "scopes.txt"):
-        sync_rules.SCOPES_FILE.write_text("/acme/security-test/\n")
-        assert sync_rules.load_scopes() == ["/acme/security-test/"]
+        sync_rules.SCOPES_FILE.write_text("/acme/backend/,/acme/frontend/\n")
+        assert sync_rules.load_scopes() == ["/acme/backend/", "/acme/frontend/"]
+
+        sync_rules.SCOPES_FILE.write_text(
+            "/your-org/backend/,/your-org/frontend/,/your-org/mobile/\n"
+        )
+        try:
+            sync_rules.load_scopes()
+        except ValueError as exc:
+            assert "replace the example scopes" in str(exc)
+        else:
+            raise AssertionError("unchanged example scopes must be rejected")
 
         sync_rules.SCOPES_FILE.write_text("{{QODO_RULE_SCOPE}}\n")
         try:
