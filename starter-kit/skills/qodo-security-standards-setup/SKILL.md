@@ -78,7 +78,7 @@ Inspect the copied README, workflow, rule template, demo rule, and sync helper. 
 1. Confirmation that Qodo Cloud is correct. For single-tenant or on-premises deployments, stop and use the administrator-supplied publication login command rather than modifying the workflow ad hoc.
 2. The initial scope in `/owner/repository/` form, using the walkthrough repository.
 
-Replace the placeholder in `rule-scopes.txt` with the initial scope. Create the protected `qodo-sync` environment and restrict it to the default branch. Require pull requests and the helper check on that branch so publication always follows reviewed content. Ask which workspace admin will own publication; have that admin store the workspace admin key as `QODO_API_KEY` in the protected environment through the Git provider UI or approved secret manager, then confirm completion. If no admin key is available, stop before publication and report that exact dependency.
+Review the example in `rule-scopes.txt`, replace it with the complete target repository list, and confirm the list with the user. Create the protected `qodo-sync` environment and restrict it to the default branch. Require pull requests and the helper check on that branch so publication always follows reviewed content. Ask which workspace admin will own publication; have that admin store the workspace admin key as `QODO_API_KEY` in the protected environment through the Git provider UI or approved secret manager, then confirm completion. If no admin key is available, stop before publication; do not request or expose it in chat.
 
 Run the helper check and sync preview. Optionally run local Qodo review. Show the diff and preview before asking approval for Git writes.
 

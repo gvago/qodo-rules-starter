@@ -109,6 +109,14 @@ shows the normal Git-first flow: write a standard, let Qodo review it in the
 pull request, resolve useful findings with the Qodo resolver skill, merge, and
 publish it with the intended scope.
 
+**Where scopes are applied:** edit [`starter-kit/rule-scopes.txt`](starter-kit/rule-scopes.txt) with the full repository list, for example:
+
+```text
+/your-org/backend/,/your-org/frontend/,/your-org/mobile/
+```
+
+After merge, the starter workflow runs `scripts/sync_rules.py --apply`. The script passes that complete list to Qodo CLI as `--scopes` on every rule create or update. The detailed setup is in [`starter-kit/README.md`](starter-kit/README.md#choose-where-the-rules-apply).
+
 Use the guided setup skill above to walk through the setup end to end. The
 starter also includes placeholder YAML, a reviewed-branch Qodo CLI sync, and an
 optional local helper check. Begin with one non-production repository so the

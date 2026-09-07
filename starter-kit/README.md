@@ -57,17 +57,21 @@ If `qodo` is not on `PATH`, try `$HOME/.qodo/bin/qodo`. If it is missing or outd
 
 Use your organization's approved installer and login endpoint when it provides one.
 
-### Configure the first scope
+### Choose where the rules apply
 
-Create these GitHub settings:
+Put the target repository scopes in `rule-scopes.txt`. Use Qodo's `/owner/repository/` format and separate multiple repositories with commas:
+
+```text
+/your-org/backend/,/your-org/frontend/,/your-org/mobile/
+```
+
+This file is the source of truth for the complete scope list. Adding a repository applies every rule in `rules/` to it. Removing a repository removes that scope on the next publication.
+
+The application happens in [`scripts/sync_rules.py`](scripts/sync_rules.py): it reads `rule-scopes.txt` and passes the list to the Qodo CLI as `--scopes` for both `qodo rules create` and `qodo rules update`. After a reviewed pull request is merged, [`.github/workflows/review-standards.yml`](.github/workflows/review-standards.yml) runs a preview and then `python3 scripts/sync_rules.py --apply`.
+
+Protect the `qodo-sync` environment so only the default branch can access it. Store `QODO_API_KEY` there as the Qodo workspace admin API key. Never commit credentials. Keep branch protection enabled so publication always follows a reviewed pull request.
 
 This starter's publication workflow targets Qodo Cloud. For single-tenant or on-premises deployments, use the installer and login command supplied by your Qodo administrator instead of adding a configurable endpoint to the workflow.
-
-Protect the `qodo-sync` environment so only the default branch can access it. Store `QODO_API_KEY` there as the Qodo workspace admin API key. Never commit credentials.
-
-Set the initial scope in `rule-scopes.txt`, such as `/acme/security-rules-test/`. Scope changes use the same reviewed pull-request path as rule changes.
-
-The workflow publishes only after a pull request merges into the repository's live default branch. Keep branch protection enabled so publication always follows a reviewed pull request.
 
 The workflow uses a version-pinned Qodo CLI artifact and verifies the SHA-256 checksum currently published by Qodo before login. Its Python dependency is also version-and-hash pinned. Update the Qodo version and checksum together from Qodo's `version.json` when upgrading the starter.
 

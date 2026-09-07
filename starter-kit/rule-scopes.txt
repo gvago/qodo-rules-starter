@@ -1,1 +1,1 @@
-{{QODO_RULE_SCOPE}}
+/your-org/backend/,/your-org/frontend/,/your-org/mobile/

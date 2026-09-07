@@ -83,7 +83,13 @@ Configure the protected `QODO_API_KEY` CI secret with a workspace admin API key.
 
 The included publication workflow targets Qodo Cloud. Single-tenant and on-premises deployments should use the installer and login command supplied by their Qodo administrator.
 
-Set the initial reviewed scope in `rule-scopes.txt`, for example `/your-git-org/security-rules-test/`.
+Set the reviewed scopes in `rule-scopes.txt`. Use `/owner/repository/` format and separate multiple repositories with commas:
+
+```text
+/your-org/backend/,/your-org/frontend/,/your-org/mobile/
+```
+
+This is the complete target list for every rule in `rules/`.
 
 Use the test repository for the first walkthrough. After that, select the real scope based on where the standard applies.
 
@@ -110,7 +116,7 @@ You can also run `qodo review` before opening the pull request. It reviews local
 
 ## Step 3: publish to Qodo
 
-After merge, the publication workflow uses the Qodo CLI to create new Review Standards and update existing ones by exact rule name. It publishes only after a pull request merges into the repository's live default branch and requires branch protection. It applies `rule-scopes.txt` as the complete scope list.
+After merge, the publication workflow uses the Qodo CLI to create new Review Standards and update existing ones by exact rule name. It publishes only after a pull request merges into the repository's live default branch and requires branch protection. The sync script reads the complete list from `rule-scopes.txt` and passes it to `qodo rules create` or `qodo rules update` through the `--scopes` option.
 
 The included sync runs a preview first, then applies the same plan. It reports each rule as `CREATE`, `UPDATE`, or `UNCHANGED`. The workflow uses a version-pinned Qodo CLI artifact and verifies the SHA-256 checksum currently published by Qodo before login. The Python dependency is version-and-hash pinned.
 
