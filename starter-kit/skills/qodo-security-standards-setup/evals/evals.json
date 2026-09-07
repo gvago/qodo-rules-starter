@@ -21,7 +21,7 @@
     {
       "id": 4,
       "prompt": "Portal readiness is confirmed for both repositories. Continue setting up https://github.com/acme/security-standards, but stop before any Git write or live Qodo rule change.",
-      "expected_output": "The response gets starter-kit from https://github.com/gvago/qodo-rules-starter at a recorded commit, preserves existing files, sets the initial scope in rule-scopes.txt, creates or proposes the protected qodo-sync environment, and has an admin store QODO_API_KEY without exposing it. It runs or proposes the helper check and sync preview, may offer optional local Qodo review, shows the diff, and stops before branch, commit, push, PR, merge, or live rule mutation.",
+      "expected_output": "The response gets starter-kit from https://github.com/gvago/qodo-rules-starter at a recorded commit, preserves existing files, reviews and replaces the example in rule-scopes.txt with the complete target repository list, creates or proposes the protected qodo-sync environment, and has an admin store QODO_API_KEY without exposing it. It runs or proposes the helper check and sync preview, may offer optional local Qodo review, shows the diff, and stops before branch, commit, push, PR, merge, or live rule mutation.",
       "files": []
     },
     {
