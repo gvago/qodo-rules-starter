@@ -1,0 +1,28 @@
+name: Qodo test review
+on:
+  workflow_run:
+    workflows: [Test evidence]
+    types: [completed]
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # workflow_run uses this workflow from the default branch.
+      # Never change this checkout to the PR head or execute downloaded files.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate evidence and request review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: python scripts/test_evidence.py publish --run-id "$RUN_ID"
