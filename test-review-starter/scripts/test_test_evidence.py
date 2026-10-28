@@ -26,6 +26,17 @@ class AdmissionTests(unittest.TestCase):
     def test_zero_added_count_stays_zero(self):
         self.assertEqual(int('0' or 1), 0)
 
+    def test_run_merge_sha_uses_associated_pr_head(self):
+        payload = dict(head_sha='a'*40, base_sha='b'*40, tests_run=1, tests_ok=True,
+                       files=[], measurement_scope='no_changed_source')
+        run = dict(conclusion='success', event='pull_request', head_sha='c'*40,
+                   pull_requests=[dict(head=dict(sha='a'*40))])
+        pr = dict(state='open', head=dict(sha='a'*40), base=dict(sha='b'*40))
+        self.assertEqual(evidence.admit(payload, run, pr)['head_sha'], 'a'*40)
+        payload['head_sha'] = 'c'*40
+        with self.assertRaises(ValueError):
+            evidence.admit(payload, run, pr)
+
     def test_passing_suite_count(self):
         self.assertEqual(evidence.validate_suite('<testsuite><testcase/><testcase/></testsuite>'), 2)
 

@@ -35,7 +35,9 @@ def select_files(report, changed):
 def admit(payload, run, pr):
     if run['conclusion'] != 'success' or run['event'] != 'pull_request' or pr['state'] != 'open':
         raise ValueError('Require successful PR run and open PR')
-    if payload['head_sha'] != run['head_sha'] or payload['head_sha'] != pr['head']['sha']:
+    associated_heads = [p.get('head', {}).get('sha') for p in run.get('pull_requests', [])]
+    tested_head = associated_heads[0] if len(associated_heads) == 1 else run['head_sha']
+    if payload['head_sha'] != tested_head or payload['head_sha'] != pr['head']['sha']:
         raise ValueError('Stale head')
     if payload['base_sha'] != pr['base']['sha']:
         raise ValueError('Stale base; rerun tests')
@@ -108,6 +110,11 @@ def publish(args):
     if run['name'] != 'Test evidence' or run['event'] != 'pull_request':
         raise ValueError('Unexpected workflow')
     prs = run['pull_requests']
+    if not prs:
+        candidates = api(repo, f'pulls?state=open&head={repo.split("/")[0]}:{run["head_branch"]}&per_page=100')
+        prs = [p for p in candidates if run['head_sha'] in (p['head']['sha'], p.get('merge_commit_sha'))]
+        if len(prs) == 1:
+            run['pull_requests'] = prs
     if len(prs) != 1:
         raise ValueError('Require exactly one associated PR')
     number = prs[0]['number']
