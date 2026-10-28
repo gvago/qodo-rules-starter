@@ -1,0 +1,37 @@
+name: Test evidence
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  tests:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-test.txt
+      - name: Run existing tests
+        run: |
+          mkdir -p ci-output
+          python -m pytest tests -q --cov=src --cov-branch --cov-report=json:ci-output/coverage.json --junitxml=ci-output/junit.xml
+      - name: Collect changed branch evidence
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python scripts/test_evidence.py collect --base "$BASE_SHA" --source src
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-evidence
+          path: ci-output/evidence.json
+          if-no-files-found: error
+          retention-days: 7

@@ -25,6 +25,14 @@ configure centrally, and nothing outside this repository to maintain.
 | `tools/sync_rule_scopes.py` | Keeps that mapping current as repositories are added |
 | `starter-kit/` | Copyable YAML, CI, Qodo CLI sync, checks, and guided setup skill |
 
+## Missing-test review
+
+**Will Qodo comment on missing tests? Yes.** Follow the
+[CI-backed test review guide](docs/ci-backed-test-review.md) to connect a review
+skill with your existing test runner and branch coverage. The copyable
+[`test-review-starter/`](test-review-starter/) includes GitHub Actions workflows,
+a Python evidence collector, a trusted publisher and the review skill.
+
 ## Guided setup: start here
 
 Do not work through the sections below by hand unless you want to. Use the
