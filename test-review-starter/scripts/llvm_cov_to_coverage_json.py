@@ -10,8 +10,14 @@ def convert(export, root):
     for f in export['data'][0]['files']:
         path = os.path.relpath(f['filename'], root)
         seen, rows = {}, {'missing_branches': [], 'executed_branches': []}
-        for b in f.get('branches', []):
-            line, true_n, false_n = b[0], b[4], b[5]
+        # Branches inside macro bodies carry the macro-definition line. Attribute
+        # them to the line where the macro is invoked (the expansion's source
+        # region) so a changed invocation line sees them.
+        records = [(b[0], b) for b in f.get('branches', []) if b[6] == 0]
+        for e in f.get('expansions', []):
+            records += [(e['source_region'][0], b) for b in e.get('branches', [])]
+        for line, b in sorted(records, key=lambda r: r[0]):
+            true_n, false_n = b[4], b[5]
             k = seen[line] = seen.get(line, -1) + 1
             for n, side in ((true_n, -(2 * k + 1)), (false_n, -(2 * k + 2))):
                 rows['executed_branches' if n else 'missing_branches'].append([line, side])

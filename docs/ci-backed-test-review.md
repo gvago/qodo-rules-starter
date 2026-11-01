@@ -89,12 +89,14 @@ The review skill and the publisher workflow are language-independent. Only the t
    ```
 
    Use the `llvm-profdata` and `llvm-cov` versions that match your clang.
-3. Write `ci-output/junit.xml`. GoogleTest (`--gtest_output=xml:ci-output/junit.xml`) and Catch2 (`-r junit`) emit it. The collector rejects a suite with no passing tests, so a plain exit-code runner needs a JUnit file with one `testcase` per passing test.
+3. Write `ci-output/junit.xml`. GoogleTest (`--gtest_output=xml:ci-output/junit.xml`) and Catch2 (`-r junit -o ci-output/junit.xml`) emit it. The collector rejects a suite with no passing tests, so a plain exit-code runner needs a JUnit file with one `testcase` per passing test.
 4. Run the collector with the extensions to measure:
 
    ```sh
    EVIDENCE_EXTS=.cpp,.cc,.h,.hpp python scripts/test_evidence.py collect --base "$BASE_SHA" --source src
    ```
+
+Decisions inside macros are attributed to the line where the macro is invoked, so a changed invocation line sees them.
 
 Branch locations use the decision line plus a negative number: `[line, -1]` is the true side of the first branch on that line and `[line, -2]` the false side. Negative numbers never collide with line numbers. Findings cite decision lines, not branch targets.
 
