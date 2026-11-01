@@ -24,6 +24,8 @@ configure centrally, and nothing outside this repository to maintain.
 | `docs/security-review-standards-as-code.md` | Guided workflow for managing Review Standards in Git |
 | `tools/sync_rule_scopes.py` | Keeps that mapping current as repositories are added |
 | `starter-kit/` | Copyable YAML, CI, Qodo CLI sync, checks, and guided setup skill |
+| `docs/ci-backed-test-review.md` | Get missing-test feedback in PR reviews, backed by CI branch coverage |
+| `test-review-starter/` | Copyable workflows, evidence collector, publisher and `test-impact` review skill |
 
 ## Missing-test review
 
@@ -32,6 +34,11 @@ configure centrally, and nothing outside this repository to maintain.
 skill with your existing test runner and branch coverage. The copyable
 [`test-review-starter/`](test-review-starter/) includes GitHub Actions workflows,
 a Python evidence collector, a trusted publisher and the review skill.
+
+pytest works as-is. C and C++ projects built with clang use the included LLVM
+coverage converter; see
+[Using C or C++](docs/ci-backed-test-review.md#using-c-or-c-clang-instead-of-pytest).
+Other languages need their own converter to the same coverage format.
 
 ## Guided setup: start here
 
