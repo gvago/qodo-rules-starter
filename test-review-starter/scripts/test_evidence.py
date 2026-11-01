@@ -10,6 +10,9 @@ import re
 import xml.etree.ElementTree as ET
 
 
+EXTS = tuple(os.environ.get('EVIDENCE_EXTS', '.py').split(','))
+
+
 def validate_suite(xml):
     root = ET.fromstring(xml)
     cases = list(root.iter('testcase'))
@@ -81,12 +84,12 @@ def collect(args):
         if line.startswith('+++ '):
             path = line[6:] if line.startswith('+++ b/') else None
         match = re.match(r'@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@', line)
-        if match and path and path.endswith('.py'):
+        if match and path and path.endswith(EXTS):
             start = int(match[1])
             size = 1 if match[2] is None else int(match[2])
             changed.setdefault(path, set()).update(range(start, start + size))
     names = git('diff', '--no-ext-diff', '--no-renames', '--name-only', '-z', args.base, 'HEAD', '--', args.source).split('\0')
-    expected = {p for p in names if p.endswith('.py') and Path(p).exists()}
+    expected = {p for p in names if p.endswith(EXTS) and Path(p).exists()}
     if expected != set(changed):
         raise ValueError('Unsupported diff filename; refusing incomplete measurements')
     payload = dict(head_sha=git('rev-parse', 'HEAD'), base_sha=args.base,

@@ -75,6 +75,34 @@ Keep required test checks in CI. This starter requests review for successful, no
 
 Failed or empty suites do not produce a coverage-backed request. Fix the test job and rerun. A stale result is rejected: rerun tests after the base changes or push a new commit to trigger a fresh run.
 
+## Using C or C++ (clang) instead of pytest
+
+The review skill and the publisher workflow are language-independent. Only the test and coverage step changes: your CI must produce a JUnit file and a branch-coverage report, and `test_evidence.py collect` must read them. The starter ships a converter for clang's LLVM coverage. The flow below was verified end to end on a small C++ example with Apple clang: a test at 20 produced a missing branch on the changed `if`, and adding tests at 99, 100 and 101 cleared it. It has not been run on Ubuntu CI, so confirm it in your first validation PR.
+
+1. Copy `scripts/llvm_cov_to_coverage_json.py` next to `test_evidence.py`.
+2. Build the tests with `-fprofile-instr-generate -fcoverage-mapping`, run them with `LLVM_PROFILE_FILE=ci-output/t.profraw`, then export:
+
+   ```sh
+   llvm-profdata merge -sparse ci-output/t.profraw -o ci-output/t.profdata
+   llvm-cov export ./your_test_binary -instr-profile=ci-output/t.profdata -format=text > ci-output/llvm.json
+   python scripts/llvm_cov_to_coverage_json.py ci-output/llvm.json ci-output/coverage.json .
+   ```
+
+   Use the `llvm-profdata` and `llvm-cov` versions that match your clang.
+3. Write `ci-output/junit.xml`. GoogleTest (`--gtest_output=xml:ci-output/junit.xml`) and Catch2 (`-r junit`) emit it. The collector rejects a suite with no passing tests, so a plain exit-code runner needs a JUnit file with one `testcase` per passing test.
+4. Run the collector with the extensions to measure:
+
+   ```sh
+   EVIDENCE_EXTS=.cpp,.cc,.h,.hpp python scripts/test_evidence.py collect --base "$BASE_SHA" --source src
+   ```
+
+Branch locations use the decision line plus a negative number: `[line, -1]` is the true side of the first branch on that line and `[line, -2]` the false side. Negative numbers never collide with line numbers. Findings cite decision lines, not branch targets.
+
+Limits:
+- A changed file that is absent from the coverage report, such as a header with no executable code, makes the collector refuse with "Missing changed-file measurement". Restrict `EVIDENCE_EXTS` or `--source` to files that your tests compile.
+- Only changed files under `--source` are measured, so link the tests against sources in that directory.
+- Other languages (JaCoCo, Istanbul, Go) need a converter to the same coverage.py-shaped JSON. None is included.
+
 ## Troubleshooting
 
 - **No review request:** inspect the `Qodo test review` job. It reports the failed admission check or links the posted request.
